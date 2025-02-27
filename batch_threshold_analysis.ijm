@@ -5,9 +5,11 @@ Dialog.addMessage("Make sure the target folder contains ONLY the .nd2s! No subfo
 Dialog.addDirectory("Choose folder that contains the .lifs/.nd2s you want to work with: ", "");
 Dialog.addNumber("Enter number of channels:", 0);
 Dialog.addCheckbox("Are these z-stacks that you want to analyze as max projections?", 0);
+Dialog.addCheckbox("Do you want to specify min/max particle sizes? Default is 0-Infinity", 0);
 Dialog.show();
 
 var max_projections = Dialog.getCheckbox();
+var particleSize_yesno = Dialog.getCheckbox();
 
 
 var lif_ListDir = Dialog.getString();
@@ -26,7 +28,11 @@ for (i = 0; i < numMarkers; i++) {
 	Dialog.addString("Name", "");
 	Dialog.addNumber("Threshhold Min:", 0);
 	Dialog.addNumber("Threshhold Max:", 255);
+	if (particleSize_yesno > 0) {
+		Dialog.addNumber("Particle size minimum:", 0);
+		Dialog.addNumber("Particle size maximum:", "Infinity");
 	}
+}
 
 Dialog.show();
 //Get the marker labels
@@ -39,10 +45,24 @@ for (i = 0; i < numMarkers; i++) {
 
 var thresholdMax_array = newArray(numMarkers);
 var thresholdMin_array = newArray(numMarkers);
+var particleSizeMin_array = newArray(numMarkers);
+var particleSizeMax_array = newArray(numMarkers);
 for (i = 0; i < numMarkers; i++) {
 	thresholdMin_array[i] = Dialog.getNumber();
 	thresholdMax_array[i] = Dialog.getNumber();
+	if (particleSize_yesno > 0) {
+	particleSizeMin_array[i] = Dialog.getNumber();
+	particleSizeMax_array[i] = Dialog.getNumber();
 	}
+}
+
+if (particleSize_yesno < 1) {
+	for (i = 0; i < numMarkers; i++) {
+		particleSizeMin_array[i] = 0;
+		particleSizeMax_array[i] = "Infinity";
+	}
+
+}
 
 var num_Series = 0;
 //Start the loop thru the folder
@@ -81,7 +101,7 @@ for (file = 0; file < lif_List.length; file++) {
 		selectWindow(MaxProjection_array[j]);
 		rename(markerNames_channels_array[j]);
 		setThreshold(thresholdMin_array[j],thresholdMax_array[j], "raw");
-		run("Analyze Particles...", "display summarize");
+		run("Analyze Particles...", "size="+particleSizeMin_array[j]+"-"+particleSizeMax_array[j]+" display summarize");
 		close();
 		}
 		//while (nImages > 0){
@@ -110,7 +130,7 @@ for (file = 0; file < lif_List.length; file++) {
 		selectWindow(channels_array[j]);
 		rename(markerNames_channels_array[j]);
 		setThreshold(thresholdMin_array[j],thresholdMax_array[j], "raw");
-		run("Analyze Particles...", "display summarize");
+		run("Analyze Particles...", "size="+particleSizeMin_array[j]+"-"+particleSizeMax_array[j]+" display summarize");
 		close();
 		}
 		while (nImages > 0){
